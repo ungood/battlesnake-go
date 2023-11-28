@@ -7,10 +7,9 @@ import (
 	"github.com/BattlesnakeOfficial/rules/client"
 )
 
-// info is called when you create your Battlesnake on play.battlesnake.com
-// and controls your Battlesnake's appearance
-// TIP: If you open your Battlesnake URL in a browser you should see this data
-func Info() client.SnakeMetadataResponse {
+type SimpleSnake struct{}
+
+func (s *SimpleSnake) Info() client.SnakeMetadataResponse {
 	log.Println("INFO")
 
 	return client.SnakeMetadataResponse{
@@ -22,24 +21,19 @@ func Info() client.SnakeMetadataResponse {
 	}
 }
 
-// start is called when your Battlesnake begins a game
-func Start(state client.SnakeRequest) {
+func (s *SimpleSnake) Start(request client.SnakeRequest) {
 	log.Println("GAME START")
 }
 
-// end is called when your Battlesnake finishes a game
-func End(state client.SnakeRequest) {
+func (s *SimpleSnake) End(request client.SnakeRequest) {
 	log.Printf("GAME OVER\n\n")
 }
 
-// move is called on every turn and returns your next move
-// Valid moves are "up", "down", "left", or "right"
-// See https://docs.battlesnake.com/api/example-move for available data
-func Move(state client.SnakeRequest) client.MoveResponse {
+func (s *SimpleSnake) Move(request client.SnakeRequest) client.MoveResponse {
 	walls := map[client.Coord]bool{}
 
-	for _, snake := range state.Board.Snakes {
-		log.Printf("MOVE %d: %s\n", state.Turn, snake.Name)
+	for _, snake := range request.Board.Snakes {
+		log.Printf("MOVE %d: %s\n", request.Turn, snake.Name)
 		walls[snake.Head] = true
 		for _, body := range snake.Body {
 			walls[body] = true
@@ -48,13 +42,13 @@ func Move(state client.SnakeRequest) client.MoveResponse {
 
 	isMoveSafe := map[Direction]bool{}
 
-	myHead := state.You.Head
+	myHead := request.You.Head
 
 	for direction, coord := range Directions {
 		destination := Add(myHead, coord)
-		if destination.X < 0 || destination.X >= state.Board.Width {
+		if destination.X < 0 || destination.X >= request.Board.Width {
 			isMoveSafe[direction] = false
-		} else if destination.Y < 0 || destination.Y >= state.Board.Height {
+		} else if destination.Y < 0 || destination.Y >= request.Board.Height {
 			isMoveSafe[direction] = false
 		} else if walls[destination] {
 			isMoveSafe[direction] = false
@@ -81,7 +75,7 @@ func Move(state client.SnakeRequest) client.MoveResponse {
 	}
 
 	if len(safeMoves) == 0 {
-		log.Printf("MOVE %d: No safe moves detected! Moving down\n", state.Turn)
+		log.Printf("MOVE %d: No safe moves detected! Moving down\n", request.Turn)
 		return client.MoveResponse{Move: "down"}
 	}
 
@@ -91,7 +85,7 @@ func Move(state client.SnakeRequest) client.MoveResponse {
 	// TODO: Step 4 - Move towards food instead of random, to regain health and survive longer
 	// food := state.Board.Food
 
-	log.Printf("MOVE %d: %s\n", state.Turn, nextMove)
+	log.Printf("MOVE %d: %s\n", request.Turn, nextMove)
 	return client.MoveResponse{
 		Move: string(nextMove),
 	}

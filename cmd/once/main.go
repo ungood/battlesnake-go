@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/ungood/battlesnake-go/pkg/server"
+	"github.com/ungood/battlesnake-go/server"
 )
 
 func main() {

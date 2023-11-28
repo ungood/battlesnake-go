@@ -1,4 +1,4 @@
-package server
+package battlesnake
 
 import (
 	"encoding/json"
@@ -7,13 +7,12 @@ import (
 	"net/http"
 
 	"github.com/BattlesnakeOfficial/rules/client"
-	"github.com/ungood/battlesnake-go/pkg/battlesnake"
 )
 
-// HTTP Handlers
+var snake = SimpleSnake{}
 
 func HandleIndex(w http.ResponseWriter, r *http.Request) {
-	response := battlesnake.Info()
+	response := snake.Info()
 
 	w.Header().Set("Content-Type", "application/json")
 	err := json.NewEncoder(w).Encode(response)
@@ -23,27 +22,27 @@ func HandleIndex(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandleStart(w http.ResponseWriter, r *http.Request) {
-	state := client.SnakeRequest{}
-	err := json.NewDecoder(r.Body).Decode(&state)
+	request := client.SnakeRequest{}
+	err := json.NewDecoder(r.Body).Decode(&request)
 	if err != nil {
 		log.Printf("ERROR: Failed to decode start json, %s", err)
 		return
 	}
 
-	battlesnake.Start(state)
+	snake.Start(request)
 
 	// Nothing to respond with here
 }
 
 func HandleMove(w http.ResponseWriter, r *http.Request) {
-	state := client.SnakeRequest{}
-	err := json.NewDecoder(r.Body).Decode(&state)
+	request := client.SnakeRequest{}
+	err := json.NewDecoder(r.Body).Decode(&request)
 	if err != nil {
 		log.Printf("ERROR: Failed to decode move json, %s", err)
 		return
 	}
 
-	response := battlesnake.Move(state)
+	response := snake.Move(request)
 
 	w.Header().Set("Content-Type", "application/json")
 	err = json.NewEncoder(w).Encode(response)
@@ -54,19 +53,15 @@ func HandleMove(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandleEnd(w http.ResponseWriter, r *http.Request) {
-	state := client.SnakeRequest{}
-	err := json.NewDecoder(r.Body).Decode(&state)
+	request := client.SnakeRequest{}
+	err := json.NewDecoder(r.Body).Decode(&request)
 	if err != nil {
 		log.Printf("ERROR: Failed to decode end json, %s", err)
 		return
 	}
 
-	battlesnake.End(state)
-
-	// Nothing to respond with here
+	snake.End(request)
 }
-
-// Middleware
 
 const ServerID = "ungood/battlesnake-go"
 
@@ -78,6 +73,8 @@ func withServerID(next http.HandlerFunc) http.HandlerFunc {
 }
 
 // Start Battlesnake Server
+// TODO: Figure out hosting
+// TODO: Add paths that initialize snakes with different strategies
 func Run(hostname string, port int) {
 	http.HandleFunc("/", withServerID(HandleIndex))
 	http.HandleFunc("/start", withServerID(HandleStart))
@@ -86,6 +83,6 @@ func Run(hostname string, port int) {
 
 	addr := fmt.Sprintf("%s:%d", hostname, port)
 
-	log.Printf("Running Battlesnake at %s\n", addr)
+	log.Printf("Running Battlesnake at http://%s\n", addr)
 	log.Fatal(http.ListenAndServe(addr, nil))
 }
