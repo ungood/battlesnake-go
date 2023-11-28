@@ -1,16 +1,19 @@
-package main
+package server
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
-	"os"
+
+	"github.com/BattlesnakeOfficial/rules/client"
+	"github.com/ungood/battlesnake-go/pkg/battlesnake"
 )
 
 // HTTP Handlers
 
 func HandleIndex(w http.ResponseWriter, r *http.Request) {
-	response := info()
+	response := battlesnake.Info()
 
 	w.Header().Set("Content-Type", "application/json")
 	err := json.NewEncoder(w).Encode(response)
@@ -20,27 +23,27 @@ func HandleIndex(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandleStart(w http.ResponseWriter, r *http.Request) {
-	state := GameState{}
+	state := client.SnakeRequest{}
 	err := json.NewDecoder(r.Body).Decode(&state)
 	if err != nil {
 		log.Printf("ERROR: Failed to decode start json, %s", err)
 		return
 	}
 
-	start(state)
+	battlesnake.Start(state)
 
 	// Nothing to respond with here
 }
 
 func HandleMove(w http.ResponseWriter, r *http.Request) {
-	state := GameState{}
+	state := client.SnakeRequest{}
 	err := json.NewDecoder(r.Body).Decode(&state)
 	if err != nil {
 		log.Printf("ERROR: Failed to decode move json, %s", err)
 		return
 	}
 
-	response := move(state)
+	response := battlesnake.Move(state)
 
 	w.Header().Set("Content-Type", "application/json")
 	err = json.NewEncoder(w).Encode(response)
@@ -51,21 +54,21 @@ func HandleMove(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandleEnd(w http.ResponseWriter, r *http.Request) {
-	state := GameState{}
+	state := client.SnakeRequest{}
 	err := json.NewDecoder(r.Body).Decode(&state)
 	if err != nil {
 		log.Printf("ERROR: Failed to decode end json, %s", err)
 		return
 	}
 
-	end(state)
+	battlesnake.End(state)
 
 	// Nothing to respond with here
 }
 
 // Middleware
 
-const ServerID = "battlesnake/github/starter-snake-go"
+const ServerID = "ungood/battlesnake-go"
 
 func withServerID(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -75,18 +78,14 @@ func withServerID(next http.HandlerFunc) http.HandlerFunc {
 }
 
 // Start Battlesnake Server
-
-func RunServer() {
-	port := os.Getenv("PORT")
-	if len(port) == 0 {
-		port = "8000"
-	}
-
+func Run(hostname string, port int) {
 	http.HandleFunc("/", withServerID(HandleIndex))
 	http.HandleFunc("/start", withServerID(HandleStart))
 	http.HandleFunc("/move", withServerID(HandleMove))
 	http.HandleFunc("/end", withServerID(HandleEnd))
 
-	log.Printf("Running Battlesnake at http://0.0.0.0:%s...\n", port)
-	log.Fatal(http.ListenAndServe(":"+port, nil))
+	addr := fmt.Sprintf("%s:%d", hostname, port)
+
+	log.Printf("Running Battlesnake at %s\n", addr)
+	log.Fatal(http.ListenAndServe(addr, nil))
 }

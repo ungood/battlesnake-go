@@ -1,3 +1,5 @@
-module github.com/BattlesnakeOfficial/starter-snake-go
+module github.com/ungood/battlesnake-go
 
-go 1.18
+go 1.21.1
+
+require github.com/BattlesnakeOfficial/rules v1.2.3
