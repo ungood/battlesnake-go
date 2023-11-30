@@ -16,5 +16,4 @@ RUN adduser -S app -G app
 COPY --from=builder /usr/local/bin/battlesnake-go /usr/local/bin
 
 USER app
-EXPOSE 8080
-ENTRYPOINT ["/usr/local/bin/battlesnake-go", "serve"]
+ENTRYPOINT ["/usr/local/bin/battlesnake-go", "serve", "--hostname", ""]
