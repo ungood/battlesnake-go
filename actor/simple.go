@@ -1,4 +1,4 @@
-package battlesnake
+package actor
 
 import (
 	"log"
@@ -14,15 +14,15 @@ func (s *SimpleSnake) Info() client.SnakeMetadataResponse {
 
 	return client.SnakeMetadataResponse{
 		APIVersion: "1",
-		Author:     "ungood",  // TODO: Your Battlesnake username
-		Color:      "#ff0000", // TODO: Choose color
-		Head:       "default", // TODO: Choose head
-		Tail:       "default", // TODO: Choose tail
+		Author:     "ungood",     // TODO: Your Battlesnake username
+		Color:      "#ff00ff",    // TODO: Choose color
+		Head:       "tiger-king", // TODO: Choose head
+		Tail:       "tiger-tail", // TODO: Choose tail
 	}
 }
 
 func (s *SimpleSnake) Start(request client.SnakeRequest) {
-	log.Println("GAME START")
+	log.Printf("START %+v\n", request)
 }
 
 func (s *SimpleSnake) End(request client.SnakeRequest) {
@@ -33,7 +33,6 @@ func (s *SimpleSnake) Move(request client.SnakeRequest) client.MoveResponse {
 	walls := map[client.Coord]bool{}
 
 	for _, snake := range request.Board.Snakes {
-		log.Printf("MOVE %d: %s\n", request.Turn, snake.Name)
 		walls[snake.Head] = true
 		for _, body := range snake.Body {
 			walls[body] = true
@@ -65,6 +64,9 @@ func (s *SimpleSnake) Move(request client.SnakeRequest) client.MoveResponse {
 
 	// TODO: Step 3 - Prevent your Battlesnake from colliding with other Battlesnakes
 	// DONE
+
+	// TODO: Avoid going to a spot that another snake may move to
+	// TODO: The tail of a snake is a safe move!
 
 	// Are there any safe moves left?
 	safeMoves := []Direction{}

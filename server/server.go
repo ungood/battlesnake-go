@@ -1,4 +1,4 @@
-package battlesnake
+package server
 
 import (
 	"encoding/json"
@@ -7,9 +7,10 @@ import (
 	"net/http"
 
 	"github.com/BattlesnakeOfficial/rules/client"
+	"github.com/ungood/battlesnake-go/actor"
 )
 
-var snake = SimpleSnake{}
+var snake = actor.SimpleSnake{}
 
 func HandleIndex(w http.ResponseWriter, r *http.Request) {
 	response := snake.Info()

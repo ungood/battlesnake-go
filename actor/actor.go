@@ -1,4 +1,4 @@
-package battlesnake
+package actor
 
 import (
 	"github.com/BattlesnakeOfficial/rules/client"
@@ -17,4 +17,8 @@ type SnakeActor interface {
 	// Move is called on every turn and returns your next move
 	// See https://docs.battlesnake.com/api/example-move for available data
 	Move(request client.SnakeRequest) client.MoveResponse
+}
+
+var Actors = map[string]SnakeActor{
+	"simple": &SimpleSnake{},
 }

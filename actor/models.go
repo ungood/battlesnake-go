@@ -1,11 +1,11 @@
-package battlesnake
+package actor
 
 import (
-	. "github.com/BattlesnakeOfficial/rules/client"
+	client "github.com/BattlesnakeOfficial/rules/client"
 )
 
-func Add(a, b Coord) Coord {
-	return Coord{
+func Add(a, b client.Coord) client.Coord {
+	return client.Coord{
 		X: a.X + b.X,
 		Y: a.Y + b.Y,
 	}
@@ -20,7 +20,7 @@ const (
 	Right Direction = "right"
 )
 
-var Directions = map[Direction]Coord{
+var Directions = map[Direction]client.Coord{
 	Up:    {X: 0, Y: 1},
 	Down:  {X: 0, Y: -1},
 	Left:  {X: -1, Y: 0},
