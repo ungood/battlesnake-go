@@ -32,7 +32,7 @@ steps:
 - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
   entrypoint: gcloud
   args: [
-    'run', 'deploy', ${_SERVICE_NAME}',
+    'run', 'deploy', '${_SERVICE_NAME}',
     '--image', '${_IMAGE_PATH}:${REF_NAME}',
     '--region', '${_SERVICE_REGION}'
   ]
