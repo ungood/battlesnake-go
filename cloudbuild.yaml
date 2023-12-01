@@ -24,7 +24,7 @@ steps:
 
 # Push the container image to Container Registry
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['push', '--all-tags']
+  args: ['push', '${_IMAGE_PATH}', '--all-tags']
 
 # Deploy container image to Cloud Run
 - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
