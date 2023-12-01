@@ -17,7 +17,7 @@ steps:
 - name: 'gcr.io/cloud-builders/docker'
   args: [
     'build',
-    '-t', '${_IMAGE_PATH}@${COMMIT_SHA}',
+    '-t', '${_IMAGE_PATH}:${COMMIT_SHA}',
     '-t', '${_IMAGE_PATH}:${REF_NAME}',
     '.'
   ]
