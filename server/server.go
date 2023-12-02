@@ -14,6 +14,13 @@ import (
 
 var snake = &actor.SimpleSnake{}
 
+var arrows = map[string]string{
+	"up":    "↑",
+	"down":  "↓",
+	"left":  "←",
+	"right": "→",
+}
+
 func decode(r *http.Request, event *zerolog.Event, request interface{}) {
 	err := json.NewDecoder(r.Body).Decode(request)
 	if err != nil {
@@ -50,7 +57,7 @@ func HandleStart(w http.ResponseWriter, r *http.Request) {
 
 	snake.Start(request)
 
-	event.Msg("Handled Start request")
+	event.Msgf("Game start")
 }
 
 func HandleMove(w http.ResponseWriter, r *http.Request) {
@@ -62,7 +69,8 @@ func HandleMove(w http.ResponseWriter, r *http.Request) {
 	response := snake.Move(request)
 	encode(w, event, response)
 
-	event.Msg("Handled Move request")
+	arrow := arrows[response.Move]
+	event.Msgf("Turn %3d: %s", request.Turn, arrow)
 }
 
 func HandleEnd(w http.ResponseWriter, r *http.Request) {
@@ -73,7 +81,7 @@ func HandleEnd(w http.ResponseWriter, r *http.Request) {
 
 	snake.End(request)
 
-	event.Msg("Handled End request")
+	event.Msgf("Game end")
 }
 
 const ServerID = "ungood/battlesnake-go"
@@ -95,12 +103,7 @@ func Run(hostname string, port int) {
 	http.HandleFunc("/end", withServerID(HandleEnd))
 
 	addr := fmt.Sprintf("%s:%d", hostname, port)
-	url := fmt.Sprintf("http://%s", addr)
-
-	log.Info().
-		Str("addr", addr).
-		Str("url", url).
-		Msg("Starting server")
+	log.Info().Msgf("Starting server: http://%s", addr)
 
 	err := http.ListenAndServe(addr, nil)
 	log.Fatal().Err(err).Msg("Failed to start server")

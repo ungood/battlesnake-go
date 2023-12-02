@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	stdlog "log"
 	"os"
 
 	"github.com/rs/zerolog"
@@ -11,7 +12,7 @@ import (
 
 var (
 	debug bool
-	gcp   bool
+	json  bool
 )
 
 var rootCmd = &cobra.Command{
@@ -24,7 +25,7 @@ func init() {
 	rootCmd.AddCommand(serveCmd)
 
 	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "Emit debug messages.")
-	rootCmd.PersistentFlags().BoolVar(&gcp, "gcp", false, "Format log messages for Google Cloud Platform.")
+	rootCmd.PersistentFlags().BoolVar(&json, "json", false, "Format log messages as JSON.")
 }
 
 func initLogging() {
@@ -35,12 +36,22 @@ func initLogging() {
 		zerolog.SetGlobalLevel(zerolog.DebugLevel)
 	}
 
-	if gcp {
+	if json {
 		zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 		zerolog.LevelFieldName = "severity"
 	} else {
-		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
+		writer := zerolog.ConsoleWriter{
+			Out:              os.Stderr,
+			FormatFieldName:  func(i interface{}) string { return "" },
+			FormatFieldValue: func(i interface{}) string { return "" },
+		}
+
+		log.Logger = log.Output(writer)
 	}
+
+	// Redirect standard library log to zerolog.
+	stdlog.SetFlags(0)
+	stdlog.SetOutput(log.Logger)
 }
 
 // Execute executes the root command.

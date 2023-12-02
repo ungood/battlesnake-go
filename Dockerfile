@@ -16,4 +16,4 @@ RUN adduser -S app -G app
 COPY --from=builder /usr/local/bin/battlesnake-go /usr/local/bin
 
 USER app
-ENTRYPOINT ["/usr/local/bin/battlesnake-go", "--gcp", "serve", "--hostname", ""]
+ENTRYPOINT ["/usr/local/bin/battlesnake-go", "--json", "serve", "--hostname", ""]

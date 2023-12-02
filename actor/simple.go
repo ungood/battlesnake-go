@@ -1,8 +1,9 @@
 package actor
 
 import (
-	"log"
 	"math/rand"
+
+	"github.com/rs/zerolog/log"
 
 	"github.com/BattlesnakeOfficial/rules/client"
 )
@@ -10,8 +11,6 @@ import (
 type SimpleSnake struct{}
 
 func (s *SimpleSnake) Info() client.SnakeMetadataResponse {
-	log.Println("INFO")
-
 	return client.SnakeMetadataResponse{
 		APIVersion: "1",
 		Author:     "ungood",     // TODO: Your Battlesnake username
@@ -21,13 +20,9 @@ func (s *SimpleSnake) Info() client.SnakeMetadataResponse {
 	}
 }
 
-func (s *SimpleSnake) Start(request client.SnakeRequest) {
-	log.Printf("START %+v\n", request)
-}
+func (s *SimpleSnake) Start(request client.SnakeRequest) {}
 
-func (s *SimpleSnake) End(request client.SnakeRequest) {
-	log.Printf("GAME OVER\n\n")
-}
+func (s *SimpleSnake) End(request client.SnakeRequest) {}
 
 func (s *SimpleSnake) Move(request client.SnakeRequest) client.MoveResponse {
 	walls := map[client.Coord]bool{}
@@ -77,7 +72,7 @@ func (s *SimpleSnake) Move(request client.SnakeRequest) client.MoveResponse {
 	}
 
 	if len(safeMoves) == 0 {
-		log.Printf("MOVE %d: No safe moves detected! Moving down\n", request.Turn)
+		log.Warn().Msg("No safe moves detected!")
 		return client.MoveResponse{Move: "down"}
 	}
 
@@ -87,7 +82,6 @@ func (s *SimpleSnake) Move(request client.SnakeRequest) client.MoveResponse {
 	// TODO: Step 4 - Move towards food instead of random, to regain health and survive longer
 	// food := state.Board.Food
 
-	log.Printf("MOVE %d: %s\n", request.Turn, nextMove)
 	return client.MoveResponse{
 		Move: string(nextMove),
 	}
