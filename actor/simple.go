@@ -1,6 +1,7 @@
 package actor
 
 import (
+	"context"
 	"math/rand"
 
 	"github.com/rs/zerolog/log"
@@ -10,7 +11,7 @@ import (
 
 type SimpleSnake struct{}
 
-func (s *SimpleSnake) Info() client.SnakeMetadataResponse {
+func (s *SimpleSnake) Info(ctx context.Context) client.SnakeMetadataResponse {
 	return client.SnakeMetadataResponse{
 		APIVersion: "1",
 		Author:     "ungood",     // TODO: Your Battlesnake username
@@ -20,11 +21,11 @@ func (s *SimpleSnake) Info() client.SnakeMetadataResponse {
 	}
 }
 
-func (s *SimpleSnake) Start(request client.SnakeRequest) {}
+func (s *SimpleSnake) Start(ctx context.Context, request client.SnakeRequest) {}
 
-func (s *SimpleSnake) End(request client.SnakeRequest) {}
+func (s *SimpleSnake) End(ctx context.Context, request client.SnakeRequest) {}
 
-func (s *SimpleSnake) Move(request client.SnakeRequest) client.MoveResponse {
+func (s *SimpleSnake) Move(ctx context.Context, request client.SnakeRequest) client.MoveResponse {
 	walls := map[client.Coord]bool{}
 
 	for _, snake := range request.Board.Snakes {
@@ -72,7 +73,7 @@ func (s *SimpleSnake) Move(request client.SnakeRequest) client.MoveResponse {
 	}
 
 	if len(safeMoves) == 0 {
-		log.Warn().Msg("No safe moves detected!")
+		log.Ctx(ctx).Warn().Msg("No safe moves detected!")
 		return client.MoveResponse{Move: "down"}
 	}
 

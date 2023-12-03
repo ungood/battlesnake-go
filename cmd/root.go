@@ -41,7 +41,7 @@ func initLogging() {
 		zerolog.LevelFieldName = "severity"
 	} else {
 		writer := zerolog.ConsoleWriter{
-			Out:              os.Stderr,
+			Out:              os.Stdout,
 			FormatFieldName:  func(i interface{}) string { return "" },
 			FormatFieldValue: func(i interface{}) string { return "" },
 		}

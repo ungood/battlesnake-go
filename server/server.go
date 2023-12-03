@@ -1,11 +1,14 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 
+	"github.com/justinas/alice"
 	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/hlog"
 	"github.com/rs/zerolog/log"
 
 	"github.com/BattlesnakeOfficial/rules/client"
@@ -21,7 +24,7 @@ var arrows = map[string]string{
 	"right": "→",
 }
 
-func decode(r *http.Request, event *zerolog.Event, request interface{}) {
+func decode[T any](r *http.Request, event *zerolog.Event, request *T) {
 	err := json.NewDecoder(r.Body).Decode(request)
 	if err != nil {
 		log.Err(err).Msg("Failed to decode request")
@@ -30,7 +33,7 @@ func decode(r *http.Request, event *zerolog.Event, request interface{}) {
 	event.Any("request", request)
 }
 
-func encode(w http.ResponseWriter, event *zerolog.Event, response interface{}) {
+func encode[T any](w http.ResponseWriter, event *zerolog.Event, response *T) {
 	w.Header().Set("Content-Type", "application/json")
 	err := json.NewEncoder(w).Encode(response)
 	if err != nil {
@@ -40,71 +43,83 @@ func encode(w http.ResponseWriter, event *zerolog.Event, response interface{}) {
 	event.Any("response", response)
 }
 
-func HandleIndex(w http.ResponseWriter, r *http.Request) {
+// Add game info to the logger context
+func withGameInfo(r *http.Request, request *client.SnakeRequest) context.Context {
+	ctx := r.Context()
+
+	return hlog.FromRequest(r).With().
+		Str("game", request.Game.ID).
+		Int("turn", request.Turn).
+		Logger().WithContext(ctx)
+}
+
+func handleIndex(w http.ResponseWriter, r *http.Request) {
 	event := log.Info()
 
-	response := snake.Info()
-	encode(w, event, response)
+	response := snake.Info(r.Context())
+	encode(w, event, &response)
 
 	event.Msg("Handled Info request")
 }
 
-func HandleStart(w http.ResponseWriter, r *http.Request) {
+func handleStart(w http.ResponseWriter, r *http.Request) {
 	event := log.Info()
 
 	request := client.SnakeRequest{}
 	decode(r, event, &request)
 
-	snake.Start(request)
+	ctx := withGameInfo(r, &request)
+	snake.Start(ctx, request)
 
 	event.Msgf("Game start")
 }
 
-func HandleMove(w http.ResponseWriter, r *http.Request) {
+func handleMove(w http.ResponseWriter, r *http.Request) {
 	event := log.Info()
 
 	request := client.SnakeRequest{}
 	decode(r, event, &request)
 
-	response := snake.Move(request)
-	encode(w, event, response)
+	ctx := withGameInfo(r, &request)
+	response := snake.Move(ctx, request)
+	encode(w, event, &response)
 
 	arrow := arrows[response.Move]
 	event.Msgf("Turn %3d: %s", request.Turn, arrow)
 }
 
-func HandleEnd(w http.ResponseWriter, r *http.Request) {
+func handleEnd(w http.ResponseWriter, r *http.Request) {
 	event := log.Info()
 
 	request := client.SnakeRequest{}
 	decode(r, event, &request)
 
-	snake.End(request)
+	ctx := withGameInfo(r, &request)
+	snake.End(ctx, request)
 
 	event.Msgf("Game end")
 }
 
-const ServerID = "ungood/battlesnake-go"
-
-func withServerID(next http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Server", ServerID)
-		next(w, r)
-	}
-}
-
 // Start Battlesnake Server
-// TODO: Figure out hosting
 // TODO: Add paths that initialize snakes with different strategies
 func Run(hostname string, port int) {
-	http.HandleFunc("/", withServerID(HandleIndex))
-	http.HandleFunc("/start", withServerID(HandleStart))
-	http.HandleFunc("/move", withServerID(HandleMove))
-	http.HandleFunc("/end", withServerID(HandleEnd))
+	logHandler := hlog.NewHandler(log.Logger)
+	var chain = alice.New(logHandler)
+
+	handler := http.NewServeMux()
+	handler.Handle("/", chain.ThenFunc(handleIndex))
+	handler.Handle("/start", chain.ThenFunc(handleStart))
+	handler.Handle("/move", chain.ThenFunc(handleMove))
+	handler.Handle("/end", chain.ThenFunc(handleEnd))
 
 	addr := fmt.Sprintf("%s:%d", hostname, port)
-	log.Info().Msgf("Starting server: http://%s", addr)
 
-	err := http.ListenAndServe(addr, nil)
+	server := &http.Server{
+		Addr:    addr,
+		Handler: handler,
+	}
+
+	log.Info().Msgf("Starting server: http://%s", addr)
+	err := server.ListenAndServe()
 	log.Fatal().Err(err).Msg("Failed to start server")
 }
